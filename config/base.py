@@ -132,6 +132,31 @@ def yaml_to_scrapy_settings(config):
         proxy_config = config['proxy']
         settings['PROXY_API_URL'] = proxy_config.get('api_url', 'http://localhost:5010/get')
         settings['PROXY_ENABLED'] = str(proxy_config.get('enabled', True)).lower() == 'true'
+        settings['PROXY_NOTIFY_RATELIMIT'] = proxy_config.get('notify_ratelimit', True)
+
+    # 限速配置
+    if 'ratelimit' in config:
+        ratelimit_config = config['ratelimit']
+        settings['RATELIMIT_ENABLED'] = ratelimit_config.get('enabled', True)
+        settings['RATELIMIT_DEFAULT_RPS'] = ratelimit_config.get('default_rps', 1.0)
+        settings['RATELIMIT_DEFAULT_RPM'] = ratelimit_config.get('default_rpm', 30.0)
+        settings['RATELIMIT_BURST_SIZE'] = ratelimit_config.get('burst_size', 5)
+        settings['RATELIMIT_PER_PROXY'] = ratelimit_config.get('per_proxy', True)
+        settings['RATELIMIT_DYNAMIC_ADJUST'] = ratelimit_config.get('dynamic_adjust', True)
+
+        # 域名特定配置
+        domain_configs = {}
+        if 'domain_configs' in ratelimit_config and ratelimit_config['domain_configs']:
+            for domain, domain_config in ratelimit_config['domain_configs'].items():
+                if domain_config and isinstance(domain_config, dict):
+                    domain_configs[domain] = {
+                        'rps': domain_config.get('rps', 1.0),
+                        'rpm': domain_config.get('rpm', 30.0),
+                        'burst': domain_config.get('burst', 5),
+                        'dynamic': domain_config.get('dynamic', True),
+                        'per_proxy': domain_config.get('per_proxy', True),
+                    }
+        settings['RATELIMIT_DOMAIN_CONFIGS'] = domain_configs
     
     # 输出配置
     if 'output' in config:

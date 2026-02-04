@@ -27,10 +27,11 @@ middlewares:
     # 禁用内置中间件
     "scrapy.downloadermiddlewares.useragent.UserAgentMiddleware": null
     "scrapy.downloadermiddlewares.retry.RetryMiddleware": null
-    
+
     # 自定义中间件
     "src.middlewares.useragent.RandomUserAgentMiddleware": 400
     "src.middlewares.proxy.ProxyPoolMiddleware": 410
+    "src.middlewares.ratelimit.RateLimitMiddleware": 500  # 限速中间件在代理之后，重试之前
     "src.middlewares.retry.SmartRetryMiddleware": 550
     "src.middlewares.monitor.MonitorMiddleware": 585
 
@@ -55,6 +56,26 @@ redis:
 proxy:
   api_url: "${PROXY_API_URL:http://localhost:5010/get}"
   enabled: "${PROXY_ENABLED:false}"  # 默认关闭，生产环境通过环境变量开启
+  notify_ratelimit: true  # 代理切换时通知限速中间件
+
+# 限速配置
+ratelimit:
+  enabled: true  # 启用限速中间件
+  default_rps: 1.0  # 默认每秒请求数
+  default_rpm: 30.0  # 默认每分钟请求数
+  burst_size: 5  # 突发请求容量
+  per_proxy: true  # 每个代理独立限速
+  dynamic_adjust: true  # 启用动态调整
+
+  # 特定域名配置（可选）
+  domain_configs:
+    # 示例：为特定域名配置不同的限速策略
+    # "api.example.com":
+    #   rps: 0.5  # 每秒0.5个请求
+    #   rpm: 10   # 每分钟10个请求
+    #   burst: 2  # 突发容量2
+    #   dynamic: true
+    #   per_proxy: true
 
 # 数据输出配置（通过环境变量控制）
 output:

@@ -1,0 +1,17 @@
+# 包含配置文件
+include config/*.yaml
+include config/*.yml
+include scrapy.cfg
+include scrapyd.cfg
+
+# 包含文档
+include README.md
+include LICENSE
+
+# 排除不需要的文件
+exclude .env
+exclude .env.*
+recursive-exclude old *
+recursive-exclude logs *
+recursive-exclude data *
+recursive-exclude .git *

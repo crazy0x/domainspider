@@ -1,0 +1,116 @@
+# DomainSpider 基础配置
+# 所有环境通用的配置项
+
+# Scrapy 基础配置
+scrapy:
+  bot_name: "domainspider"
+  spider_modules: ["src.spiders"]
+  newspider_module: "src.spiders"
+  robotstxt_obey: false
+
+# 并发配置
+concurrency:
+  concurrent_requests: 32
+  concurrent_requests_per_domain: 16
+  download_delay: 1
+  randomize_download_delay: 0.5
+
+# 超时配置
+timeout:
+  download_timeout: 30
+  retry_times: 3
+  retry_http_codes: [500, 502, 503, 504, 408, 429]
+
+# 中间件配置
+middlewares:
+  downloader:
+    # 禁用内置中间件
+    "scrapy.downloadermiddlewares.useragent.UserAgentMiddleware": null
+    "scrapy.downloadermiddlewares.retry.RetryMiddleware": null
+    
+    # 自定义中间件
+    "src.middlewares.useragent.RandomUserAgentMiddleware": 400
+    "src.middlewares.proxy.ProxyPoolMiddleware": 410
+    "src.middlewares.retry.SmartRetryMiddleware": 550
+    "src.middlewares.monitor.MonitorMiddleware": 585
+
+# 管道配置
+pipelines:
+  item:
+    "src.pipelines.validation.BasicValidationPipeline": 300
+    "src.pipelines.postgres.PostgreSQLPipeline": 400
+    "src.pipelines.output.FileOutputPipeline": 800
+
+# Redis 配置（暂时禁用，需要时启动 Redis 服务）
+redis:
+  url: "${REDIS_URL:redis://localhost:6379}"
+  # dupefilter_class: "scrapy_redis_bloomfilter.dupefilter.RFPDupeFilter"
+  # scheduler: "scrapy_redis.scheduler.Scheduler"
+  # scheduler_persist: true
+  # bloom_params:
+  #   hash_number: 6
+  #   bit: 30
+
+# 代理配置（通过环境变量控制）
+proxy:
+  api_url: "${PROXY_API_URL:http://localhost:5010/get}"
+  enabled: "${PROXY_ENABLED:false}"  # 默认关闭，生产环境通过环境变量开启
+
+# 数据输出配置（通过环境变量控制）
+output:
+  dir: "${OUTPUT_DIR:/tmp/scrapy_output}"
+  format: "${OUTPUT_FORMAT:jsonlines}"  # jsonlines, json, csv
+
+# PostgreSQL 配置（通过环境变量控制）
+# 本地开发：使用默认值或 .env 文件
+# Scrapyd：在 start_scrapyd.sh 中加载 .env 或使用系统环境变量
+postgres:
+  url: "${POSTGRES_URL:postgresql://postgres:r6iPcbmqKesFtlOm@192.168.50.153:5432/domain_spider}"
+
+# 日志配置（通过环境变量控制）
+logging:
+  level: "${LOG_LEVEL:INFO}"  # 本地开发可设置 LOG_LEVEL=DEBUG
+  file: "${LOG_FILE:logs/scrapy.log}"
+
+# 监控配置
+monitoring:
+  # stats_class: "scrapy.statscollectors.MemoryStatsCollector"  # 使用默认
+  telnetconsole_enabled: false
+
+# 扩展配置（暂时禁用，待实现）
+# extensions:
+#   "src.extensions.stats.StatsExtension": 500
+#   "src.extensions.alerts.AlertExtension": 600
+
+# 请求指纹算法
+request_fingerprinter_implementation: "2.7"
+
+# AutoThrottle 自动限速
+autothrottle:
+  enabled: true
+  start_delay: 1
+  max_delay: 60
+  target_concurrency: 2.0
+  debug: false
+
+# 缓存配置
+httpcache:
+  enabled: false
+  expiration_secs: 3600
+  dir: "httpcache"
+
+# 任务相关配置
+task:
+  id_format: "{spider_name}_{date}_{timestamp}"
+  batch_size: 1000
+
+# Playwright 配置
+playwright:
+  browser_type: "chromium"  # chromium, firefox, webkit
+  launch_options:
+    headless: true
+    args:
+      - "--disable-blink-features=AutomationControlled"
+      - "--disable-dev-shm-usage"
+  default_navigation_timeout: 60000
+  default_timeout: 30000

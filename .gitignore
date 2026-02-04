@@ -70,7 +70,6 @@ data/
 htmlcov/
 .tox/
 .nox/
-tests/
 
 # Jupyter Notebook
 .ipynb_checkpoints
